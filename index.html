@@ -46,21 +46,44 @@
   </div>
 
   <script>
-    async function getSummary() {
-      const topic = document.getElementById("topic").value;
-      const output = document.getElementById("output");
-      output.textContent = "Loading...";
+  async function getSummary() {
+    const topic = document.getElementById("topic").value;
+    const output = document.getElementById("output");
+    output.innerHTML = "<p>Loading...</p>";
 
-      const url = `https://us-central1-fluted-volt-459210-r6.cloudfunctions.net/pubmedSummarizer?topic=${encodeURIComponent(topic)}`;
+    const url = `https://us-central1-fluted-volt-459210-r6.cloudfunctions.net/pubmedSummarizer?topic=${encodeURIComponent(topic)}`;
 
-      try {
-        const response = await fetch(url);
-        const text = await response.text();
-        output.textContent = text;
-      } catch (err) {
-        output.textContent = "Error: " + err.message;
-      }
+    try {
+      const response = await fetch(url);
+      const text = await response.text();
+
+      const entries = text.trim().split(/\n\n+/);
+      output.innerHTML = "";
+
+      entries.forEach(entry => {
+        const lines = entry.split("\n");
+        const titleLine = lines.find(l => l.startsWith("Title:"));
+        const linkLine = lines.find(l => l.startsWith("Link:"));
+        const summaryLine = lines.find(l => l.startsWith("Summary:"));
+
+        const title = titleLine ? titleLine.replace("Title:", "").trim() : "";
+        const link = linkLine ? linkLine.replace("Link:", "").trim() : "#";
+        const summary = summaryLine ? summaryLine.replace("Summary:", "").trim() : "";
+
+        const entryDiv = document.createElement("div");
+        entryDiv.style.marginBottom = "1.5rem";
+        entryDiv.innerHTML = `
+          <strong>${title}</strong><br>
+          <a href="${link}" target="_blank">${link}</a><br>
+          <em>${summary}</em>
+        `;
+        output.appendChild(entryDiv);
+      });
+    } catch (err) {
+      output.innerHTML = `<p style="color: red;">Error: ${err.message}</p>`;
     }
-  </script>
+  }
+</script>
+
 </body>
 </html>
